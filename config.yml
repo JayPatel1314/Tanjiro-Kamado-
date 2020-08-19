@@ -1,12 +1,12 @@
 # CONFIG SETUP
-alluka_explain_config: "hunter_____X_____hunter"   #Change me from "alluka_zoldyck"
+alluka_explain_config: "alluka_zoldyck" #Change me from "alluka_zoldyck"
 
-bot_token: "token"  
-owner_id: 1256676137
-api_key: 123456
-api_hash: ' '
-owner_username: "am_Tanny"
-database_url: "database_url"
+bot_token: "1344498873:AAFS0V5FRY7VxkB3ypvxeE2F_cq4Cnt6D0g"  
+owner_id: 726331443
+api_key: 1543761
+api_hash: '4e5c83e8fd89d6151ef246f73fa33c34'
+owner_username: "JayPatel1314"
+database_url: "postgres://zlnssgij:ihFf7hoj4tdizQOj9YabAjhnQ8ASkiCK@raja.db.elephantsql.com:5432/zlnssgij"
 message_dump: "chat_id"
 gban_dump: "chat_id"
 load: []
