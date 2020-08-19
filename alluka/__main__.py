@@ -140,9 +140,9 @@ def send_start(bot, update):
     except:
         pass
     chat = update.effective_chat  # type: Optional[Chat]
-    text = "Heya there, my name is αℓℓυкα (アルカ゠ゾルディック, Aruka Zorudikku)! "
-    text += "\nI'm the second youngest child of Silva and Kikyo Zoldyck. Under unknown circumstances, I was possessed by a mysterious Dark Continent creature, My family named Nanika.."
-    text += "\n\n𝕴𝖋 𝖞𝖔𝖚'𝖗𝖊 𝖓𝖎𝖈𝖊 𝖙𝖔 𝖒𝖊, 𝖞𝖔𝖚 𝖍𝖆𝖛𝖊 𝖙𝖔 𝖇𝖊 𝖓𝖎𝖈𝖊 𝖙𝖔 𝕹𝖆𝖓𝖎𝖐𝖆 𝖙𝖔𝖔!! 𝕴𝖋 𝖞𝖔𝖚'𝖗𝖊 𝖌𝖔𝖎𝖓𝖌 𝖙𝖔 𝖕𝖗𝖔𝖙𝖊𝖈𝖙 𝖒𝖊, 𝖞𝖔𝖚 𝖍𝖆𝖛𝖊 𝖙𝖔 𝖕𝖗𝖔𝖙𝖊𝖈𝖙 𝕹𝖆𝖓𝖎𝖐𝖆 𝖙𝖔𝖔!! 𝕭𝖚𝖙 𝖎𝖋 𝖞𝖔𝖚'𝖗𝖊 𝖌𝖔𝖎𝖓𝖌 𝖙𝖔 𝖇𝖊 𝖒𝖊𝖆𝖓 𝖙𝖔 𝕹𝖆𝖓𝖎𝖐𝖆, 𝕴 𝖍𝖆𝖙𝖊 𝖞𝖔𝖚!!!"  
+    text = "Heya there, my name is Tanjiro Kamado(鬼滅の刃(Kimetsu No Yaiba, Demon Slayer)! "
+    text += "\nI'm the youngest child in my family. I am a demon slayer who hunts demons. I became demon slayer only to convert my sister Nezuko back to human... Add me in ur grp to manage your grp. Use /help for knowing my commands..."
+    text += "\n\nI Travel with my 2 friends Inosuke Harshibra and Zenitsu Agatsuma. Our work to kill bad demons and and make this world demon free. U will use me anytime anywhere I will be happy only by helping you!!!"  
 
     keyboard = [[InlineKeyboardButton(text="❓ Help", callback_data="help_back"),InlineKeyboardButton(text="⚙️ Connect Group", callback_data="main_connect")]]
     keyboard += [[InlineKeyboardButton(text="🔌 Add me",url="http://t.me/zoldycktmbot?startgroup=true"),InlineKeyboardButton(text="👤 Support chat",url="https://telegram.dog/allukaSupport")]]
