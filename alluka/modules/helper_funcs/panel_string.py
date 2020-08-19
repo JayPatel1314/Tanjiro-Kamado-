@@ -1,4 +1,4 @@
-ALLUKA_IMG = "https://telegra.ph/file/1ca41b5335290524eee7d.jpg"
+ALLUKA_IMG = "https://tanjiro-nezuko-kimetsu-no-yaiba-anime-uhdpaper.com-4K-3.867-wp.thumbnail.jpg"
 
 SOURCE_STRING = """
 I'm built in python3, using the python-telegram-bot library, and am fully opensource - you can find what makes me tick [here](https://github.com/anilchauhanxda/allukabot)
