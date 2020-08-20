@@ -141,7 +141,7 @@ def send_start(bot, update):
         pass
     chat = update.effective_chat  # type: Optional[Chat]
     text = "Heya there, my name is Tanjiro Kamado(鬼滅の刃(Kimetsu No Yaiba, Demon Slayer)! "
-    text += "\nI'm the youngest child in my family. I am a demon slayer who hunts demons. I became demon slayer only to convert my sister Nezuko back to human... Add me in ur grp to manage your grp. Use /help for knowing my commands..."
+    text += "\nI'm the eldest child in my family. I am a demon slayer who hunts demons. I became demon slayer only to convert my sister Nezuko back to human... Add me in ur grp to manage your grp. Use /help for knowing my commands..."
     text += "\n\nI Travel with my 2 friends Inosuke Harshibra and Zenitsu Agatsuma. Our work to kill bad demons and and make this world demon free. U will use me anytime anywhere I will be happy only by helping you!!!"  
 
     keyboard = [[InlineKeyboardButton(text="❓ Help", callback_data="help_back"),InlineKeyboardButton(text="⚙️ Connect Group", callback_data="main_connect")]]
