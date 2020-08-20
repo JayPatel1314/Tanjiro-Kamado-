@@ -145,7 +145,7 @@ def send_start(bot, update):
     text += "\n\nI Travel with my 2 friends Inosuke Harshibra and Zenitsu Agatsuma. Our work to kill bad demons and and make this world demon free. U will use me anytime anywhere I will be happy only by helping you!!!"  
 
     keyboard = [[InlineKeyboardButton(text="❓ Help", callback_data="help_back"),InlineKeyboardButton(text="⚙️ Connect Group", callback_data="main_connect")]]
-    keyboard += [[InlineKeyboardButton(text="🔌 Add me",url="http://t.me/zoldycktmbot?startgroup=true"),InlineKeyboardButton(text="👤 Support chat",url="https://t.me/KamadoTanjiroOfficialSupport")]]
+    keyboard += [[InlineKeyboardButton(text="🔌 Add me",url="https://t.me/KamadoTanjiroOfficialSupport?startgroup=true"),InlineKeyboardButton(text="👤 Support chat",url="https://t.me/KamadoTanjiroOfficialSupport")]]
 
     update.effective_message.reply_photo(HELP_PANEL_STRING.ALLUKA_IMG,text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.MARKDOWN)
 
