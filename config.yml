@@ -21,7 +21,7 @@ del_cmds: False
 strict_gban: False
 strict_gmute: False
 spammers_lists: [100]
-ban_sticker: 'CAACAgUAAxkBAAIHsl5nbqXdDTmpG2HFDNhnwvE5kFbWAAI9AQAC3pTNLzeTCUmnhTneGAQ'
+ban_sticker: 'CAACAgEAAx0CRXso8AAD2l9Lw-YFN3tGy7pOgrQZka1G5pXmAAIUAQAC7f2XO6AesSLqgI91GwQ'
 
 
 # API SETUP
