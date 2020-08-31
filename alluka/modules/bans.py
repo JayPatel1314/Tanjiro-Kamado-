@@ -162,7 +162,7 @@ def temp_ban(bot: Bot, update: Update, args: List[str]) -> str:
     return ""
 
 
-@run_async1
+@run_async
 @bot_admin
 @can_restrict
 @user_admin
