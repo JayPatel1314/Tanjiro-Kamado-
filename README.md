@@ -1,4 +1,4 @@
-# allukabot // @zoldycktmbot 
+# TanjiroBot // @Tanjiro_Kamado_official_bot
 > with HunterxHunter theme.
 
 
