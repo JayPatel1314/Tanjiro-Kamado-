@@ -27,7 +27,7 @@ def afk(bot: Bot, update: Update):
 
     sql.set_afk(update.effective_user.id, reason)
     fname = update.effective_user.first_name
-    update.effective_message.reply_text("{} is now away!".format(fname))
+    update.effective_message.reply_text("{} is now offline...!".format(fname))
 
     
 @run_async
@@ -113,12 +113,12 @@ def check_afk(bot, update, user_id, fst_name, userc_id):
         if not user.reason:
             if int(userc_id) == int(user_id):
                 return
-            res = "{} is afk".format(fst_name)
+            res = "{} is now offlinr. Talk with him/her when they back online.".format(fst_name)
             update.effective_message.reply_text(res)
         else:
             if int(userc_id) == int(user_id):
                 return
-            res = "{} is afk.\nReason: {}".format(fst_name, user.reason)
+            res = "{} is offine. Talk with him/her later.\nReason: {}".format(fst_name, user.reason)
             update.effective_message.reply_text(res)
 
 
