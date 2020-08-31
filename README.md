@@ -11,7 +11,7 @@
 
 Modular Demon Slayer:Kimetsu no yaiba themed Telegram Bot for managing your group with additional features.
 
-[![alluka](https://telegra.ph/file/4d3a649980e88c3eeb362.jpg)](https://telegram.dog/zoldycktmbot) 
+[![alluka](https://telegra.ph/file/2cae348e412cac507fa50.jpg)](https://telegram.dog/Tanjiro_Kamado_official_bot) 
 
 ### Configuration
 
