@@ -1,5 +1,5 @@
 # TanjiroBot // @Tanjiro_Kamado_official_bot
-> with HunterxHunter theme.
+> with Demon Slayer: Kimetsu no yaiba theme.
 
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e96f7c790e574fa0ab2f774ceff6b8ef)](https://app.codacy.com/manual/anilchauhanxda/allukabot?utm_source=github.com&utm_medium=referral&utm_content=anilchauhanxda/allukabot&utm_campaign=Badge_Grade_Dashboard)
