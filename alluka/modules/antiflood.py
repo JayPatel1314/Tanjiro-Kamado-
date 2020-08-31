@@ -36,11 +36,11 @@ def check_flood(bot: Bot, update: Update) -> str:
     soft_flood = sql.get_flood_strength(chat.id)
     if soft_flood:  # kick
         chat.unban_member(user.id)
-        reply = "Wonderful, I don't like your flooding. Get out! {} has been kicked!".format(mention_html(user.id, user.first_name))
+        reply = "Hey Demon I don't like that u r spamming here! Get out from here! {} has been kicked outside of the group!".format(mention_html(user.id, user.first_name))
 
     else:  # ban
         chat.kick_member(user.id)
-        reply = "Frankly, I like to leave the flooding to natural disasters. {} has been banned!".format(mention_html(user.id, user.first_name))
+        reply = "U demon, are overcontrolled and doing flooding. Get out frm here. {} has been banned!".format(mention_html(user.id, user.first_name))
     try:
         keyboard = []
         msg.reply_text(reply, reply_markup=keyboard, parse_mode=ParseMode.HTML)
@@ -52,7 +52,7 @@ def check_flood(bot: Bot, update: Update) -> str:
                                              mention_html(user.id, user.first_name))
 
     except BadRequest:
-        msg.reply_text("I can't kick people here, give me permissions first! Until then, I'll disable anti-flood.")
+        msg.reply_text("If u want to use this command then first give me rights to restrict people. Then only you can use this.")
         sql.set_flood(chat.id, 0)
         return "<b>{}:</b>" \
                "\n#INFO" \
