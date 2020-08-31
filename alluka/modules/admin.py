@@ -62,7 +62,7 @@ def load(bot: Bot, update: Update):
     try:
         imported_module = importlib.import_module("alluka.modules." + text)
     except:
-        load_messasge.edit_text("Does that module even exist?")
+        load_messasge.edit_text("Does that module u r saying even exist?")
         return
 
     if not hasattr(imported_module, "__mod_name__"):
@@ -215,7 +215,7 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
     user_id = extract_user(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user.")
+        message.reply_text("You first refer a user then use this.")
         return log_message
 
     try:
@@ -224,11 +224,11 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
         return log_message
     
     if user_member.status == 'administrator' or user_member.status == 'creator':
-        message.reply_text("How am I meant to promote someone that's already an admin?")
+        message.reply_text("Why i can promote a user who is already an admin?")
         return log_message
 
     if user_id == bot.id:
-        message.reply_text("I can't promote myself! Get an admin to do it for me.")
+        message.reply_text("Hey I can't promote myself! Ask to a admin or owner to promote me.")
         return log_message
 
     # set same perms as bot - bot can't assign higher perms than itself!
@@ -246,7 +246,7 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
                             can_pin_messages=bot_member.can_pin_messages)
     except BadRequest as err:
         if err.message == "User_not_mutual_contact":
-            message.reply_text("I can't promote someone who isn't in the group.")
+            message.reply_text("I cant promote a user which is not in this grp.")
             return log_message
         else:
             message.reply_text("An error occured while promoting.")
@@ -288,15 +288,15 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
         return log_message
     
     if user_member.status == 'creator':
-        message.reply_text("This person CREATED the chat, how would I demote them?")
+        message.reply_text("This person is creater of this chat, i cant demote him u demote insted.")
         return log_message
 
     if not user_member.status == 'administrator':
-        message.reply_text("Can't demote what wasn't promoted!")
+        message.reply_text("This person is not promoted only😑. So how can i demote him?")
         return log_message
 
     if user_id == bot.id:
-        message.reply_text("I can't demote myself! Get an admin to do it for me.")
+        message.reply_text("I can't demote myself! Ask to owner or admin to do it for me.")
         return log_message
 
     try:
