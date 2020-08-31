@@ -19,28 +19,28 @@ from alluka.modules.sql.users_sql import get_all_chats
 GBAN_ENFORCE_GROUP = 6
 
 GBAN_ERRORS = {
-    "User is an administrator of the chat",
-    "Chat not found",
-    "Not enough rights to restrict/unrestrict chat member",
+    "This user is an admin/owner of the group",
+    "I can't able to find chat",
+    "I don't have rights to restrict members here. First give me rights and then try.",
     "User_not_participant",
     "Peer_id_invalid",
     "Group chat was deactivated",
     "Need to be inviter of a user to kick it from a basic group",
-    "Chat_admin_required",
+    "U need to be an admin to use this",
     "Only the creator of a basic group can kick group administrators",
     "Channel_private",
-    "Not in the chat"
+    "Thats Not in the chat"
 }
 
 UNGBAN_ERRORS = {
-    "User is an administrator of the chat",
-    "Chat not found",
-    "Not enough rights to restrict/unrestrict chat member",
+    "This user is an admin/owner of the group",
+    "I can't able to find chat",
+    "I don't have rights to restrict members here. First give me rights and then try.",
     "User_not_participant",
     "Method is available for supergroup and channel chats only",
     "Not in the chat",
     "Channel_private",
-    "Chat_admin_required",
+    "U need to be an admin to use this",
     "Peer_id_invalid",
 }
 
@@ -52,19 +52,19 @@ def gban(bot: Bot, update: Update, args: List[str]):
     user_id, reason = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user.")
+        message.reply_text("You first refer a user then try.")
         return
 
     if int(user_id) in SUDO_USERS:
-        message.reply_text("I spy, with my little eye... a sudo user war! Why are you guys turning on each other?")
+        message.reply_text("You both are sudo users so why are u triggering each other?")
         return
 
     if int(user_id) in SUPPORT_USERS:
-        message.reply_text("OOOH someone's trying to gban a support user! *grabs popcorn*")
+        message.reply_text("OOOOOHHH see this person trying to gban support user! *grabs popcorn and coke*")
         return
 
     if user_id == bot.id:
-        message.reply_text("Nice try but I ain't gonna gban myself!")
+        message.reply_text("Nice try but you failed, I can't gban myself lol😑")
         return
 
     try:
@@ -78,12 +78,12 @@ def gban(bot: Bot, update: Update, args: List[str]):
         return
 
     if user_chat.first_name == '':
-        message.reply_text("That's a deleted account, no need to gban them!")
+        message.reply_text("That's a deleted account, User already gone out and u want to gban him why😑?")
         return
 
     if sql.is_user_gbanned(user_id):
         if not reason:
-            message.reply_text("This user is already gbanned; I'd change the reason, but you haven't given me one...")
+            message.reply_text("This user is already gbanned by me; I'd change the reason, but you haven't given me one...")
             return
 
         old_reason = sql.update_gban_reason(user_id, user_chat.username or user_chat.first_name, reason)
@@ -127,7 +127,7 @@ def gban(bot: Bot, update: Update, args: List[str]):
                 pass
             else:
                 message.reply_text("Could not gban due to: {}".format(excp.message))
-                send_to_list(bot, SUDO_USERS, "Could not gban due to: {}".format(excp.message))
+                send_to_list(bot, SUDO_USERS, "Sorry, I Could not gban the user due to: {}".format(excp.message))
                 sql.ungban_user(user_id)
                 return
         except TelegramError:
@@ -138,7 +138,7 @@ def gban(bot: Bot, update: Update, args: List[str]):
                        parse_mode=ParseMode.HTML)
 
     try:
-        bot.send_message(user_id, "You've been globally banned from all groups where I am admin. If this is a mistake, you can appeal your ban @allukatm or PM @zerotwopmbot",parse_mode=ParseMode.HTML)
+        bot.send_message(user_id, "You've been globally banned from all groups where I am admin. If this is a mistake, you can appeal your ban @JayPatel1314 or PM @zerotwopmbot",parse_mode=ParseMode.HTML)
     except:
         pass #Bot either blocked or never started by user
 
@@ -149,19 +149,19 @@ def sgban(bot: Bot, update: Update, args: List[str]):
     user_id, reason = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user.")
+        message.reply_text("First refer a user then use that.")
         return
 
     if int(user_id) in SUDO_USERS:
-        message.reply_text("I spy, with my little eye... a sudo user war! Why are you guys turning on each other?")
+        message.reply_text("You both are sudo users so why are u triggering each other? *grabs chips*")
         return
 
     if int(user_id) in SUPPORT_USERS:
-        message.reply_text("OOOH someone's trying to gban a support user! *grabs popcorn*")
+        message.reply_text("OOOOOHHH see this person trying to gban support user! *grabs popcorn and coke*")
         return
 
     if user_id == bot.id:
-        message.reply_text("Nice try but I ain't gonna gban myself!")
+        message.reply_text("Nice try but you failed, I can't gban myself lol😑!")
         return
 
     try:
@@ -175,7 +175,7 @@ def sgban(bot: Bot, update: Update, args: List[str]):
         return
 
     if user_chat.first_name == '':
-        message.reply_text("That's a deleted account, no need to gban them!")
+        message.reply_text("That's a deleted account, User already gone out and u want to gban him why😑?")
         return
 
     if sql.is_user_gbanned(user_id):
