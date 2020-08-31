@@ -28,7 +28,7 @@ CURRENT_WARNING_FILTER_STRING = "<b>Current warning filters in this chat:</b>\n"
 def warn(user: User, chat: Chat, reason: str, message: Message, warner: User = None) -> str:
     
     if is_user_admin(chat, user.id):
-        # message.reply_text("Damn admins, They are too far to be One Punched!")
+        # message.reply_text("Lol admins are like hashira, They are on my side then why i restrict them!")
         return ""
 
     if warner:
