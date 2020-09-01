@@ -10,7 +10,7 @@ database_url: "postgres://zlnssgij:ihFf7hoj4tdizQOj9YabAjhnQ8ASkiCK@raja.db.elep
 message_dump: "-1001373190333"
 gban_dump: "-1001373190333"
 load: []
-no_load: []
+no_load: [anime]
 cert_path: None
 port: 5000
 workers: 4
