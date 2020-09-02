@@ -8,7 +8,7 @@ api_hash: '4e5c83e8fd89d6151ef246f73fa33c34'
 owner_username: "JayPatel1314"
 database_url: "postgres://zlnssgij:ihFf7hoj4tdizQOj9YabAjhnQ8ASkiCK@raja.db.elephantsql.com:5432/zlnssgij"
 message_dump: "-1001373190333"
-gban_dump: "-1001373190333"
+gban_dump: ""
 load: []
 no_load: [anime]
 cert_path: None
