@@ -1,201 +1,202 @@
 import html
 from typing import Optional, List
 
-from telegram import Message, Chat, Update, Bot, User
+from telegram import Message, Chat, Update, Bot, User, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, Filters
-from telegram.ext.dispatcher import run_async
+from telegram.ext import Filters, MessageHandler, CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from alluka import dispatcher, LOGGER
-from alluka.modules.helper_funcs.chat_status import bot_admin, user_admin, is_user_admin, can_restrict
-from alluka.modules.helper_funcs.extraction import extract_user, extract_user_and_text
-from alluka.modules.helper_funcs.string_handling import extract_time
+from alluka import dispatcher
+from alluka.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, can_delete
 from alluka.modules.log_channel import loggable
+from alluka.modules.sql import antiflood_sql as sql
+
+FLOOD_GROUP = 3
 
 
 @run_async
-@bot_admin
-@user_admin
 @loggable
-def mute(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat  # type: Optional[Chat]
+def check_flood(bot: Bot, update: Update) -> str:
     user = update.effective_user  # type: Optional[User]
-    message = update.effective_message  # type: Optional[Message]
+    chat = update.effective_chat  # type: Optional[Chat]
+    msg = update.effective_message  # type: Optional[Message]
 
-    user_id = extract_user(message, args)
-    if not user_id:
-        message.reply_text("You'll need to either give me a username to mute, or reply to someone to be muted.")
+    if not user:  # ignore channels
         return ""
 
-    if user_id == bot.id:
-        message.reply_text("I'm not muting myself!")
+    # ignore admins
+    if is_user_admin(chat, user.id):
+        sql.update_flood(chat.id, None)
         return ""
 
-    member = chat.get_member(int(user_id))
+    should_ban = sql.update_flood(chat.id, user.id)
+    if not should_ban:
+        return ""
+    
+    soft_flood = sql.get_flood_strength(chat.id)
+    if soft_flood:  # kick
+        chat.unban_member(user.id)
+        reply = "Wonderful, I don't like your flooding. Get out! {} has been kicked!".format(mention_html(user.id, user.first_name))
 
-    if member:
-        if is_user_admin(chat, user_id, member=member):
-            message.reply_text("Afraid I can't stop an admin from talking!")
+    else:  # ban
+        chat.kick_member(user.id)
+        reply = "Frankly, I like to leave the flooding to natural disasters. {} has been banned!".format(mention_html(user.id, user.first_name))
+    try:
+        keyboard = []
+        msg.reply_text(reply, reply_markup=keyboard, parse_mode=ParseMode.HTML)
+        msg.delete()
+        return "<b>{}:</b>" \
+               "\n#FLOOD_CTL" \
+               "\n<b>• User:</b> {}" \
+               "\nFlooded the group.".format(html.escape(chat.title),
+                                             mention_html(user.id, user.first_name))
 
-        elif member.can_send_messages is None or member.can_send_messages:
-            bot.restrict_chat_member(chat.id, user_id, can_send_messages=False)
-            message.reply_text("Muted!")
-            return "<b>{}:</b>" \
-                   "\n#MUTE" \
-                   "\n<b>Admin:</b> {}" \
-                   "\n<b>User:</b> {}".format(html.escape(chat.title),
-                                              mention_html(user.id, user.first_name),
-                                              mention_html(member.user.id, member.user.first_name))
-
-        else:
-            message.reply_text("This user is already muted!")
-    else:
-        message.reply_text("This user isn't in the chat!")
-
-    return ""
+    except BadRequest:
+        msg.reply_text("I can't kick people here, give me permissions first! Until then, I'll disable anti-flood.")
+        sql.set_flood(chat.id, 0)
+        return "<b>{}:</b>" \
+               "\n#INFO" \
+               "\nDon't have kick permissions, so automatically disabled anti-flood.".format(chat.title)
 
 
 @run_async
-@bot_admin
 @user_admin
-@loggable
-def unmute(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat  # type: Optional[Chat]
-    user = update.effective_user  # type: Optional[User]
-    message = update.effective_message  # type: Optional[Message]
-
-    user_id = extract_user(message, args)
-    if not user_id:
-        message.reply_text("You'll need to either give me a username to unmute, or reply to someone to be unmuted.")
-        return ""
-
-    member = chat.get_member(int(user_id))
-
-    if member:
-        if is_user_admin(chat, user_id, member=member):
-            message.reply_text("This is an admin, what do you expect me to do?")
-            return ""
-
-        elif member.status != 'kicked' and member.status != 'left':
-            if member.can_send_messages and member.can_send_media_messages \
-                    and member.can_send_other_messages and member.can_add_web_page_previews:
-                message.reply_text("This user already has the right to speak.")
-                return ""
-            else:
-                bot.restrict_chat_member(chat.id, int(user_id),
-                                         can_send_messages=True,
-                                         can_send_media_messages=True,
-                                         can_send_other_messages=True,
-                                         can_add_web_page_previews=True)
-                message.reply_text("Unmuted!")
-                return "<b>{}:</b>" \
-                       "\n#UNMUTE" \
-                       "\n<b>Admin:</b> {}" \
-                       "\n<b>User:</b> {}".format(html.escape(chat.title),
-                                                  mention_html(user.id, user.first_name),
-                                                  mention_html(member.user.id, member.user.first_name))
-    else:
-        message.reply_text("This user isn't even in the chat, unmuting them won't make them talk more than they "
-                           "already do!")
-
-    return ""
-
-
-@run_async
-@bot_admin
 @can_restrict
-@user_admin
 @loggable
-def temp_mute(bot: Bot, update: Update, args: List[str]) -> str:
+def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     message = update.effective_message  # type: Optional[Message]
 
-    user_id, reason = extract_user_and_text(message, args)
+    if len(args) >= 1:
+        val = args[0].lower()
+        if val == "off" or val == "no" or val == "0":
+            sql.set_flood(chat.id, 0)
+            message.reply_text("Anti-flood has been disabled.")
 
-    if not user_id:
-        message.reply_text("You don't seem to be referring to a user.")
-        return ""
+        elif val.isdigit():
+            amount = int(val)
+            if amount <= 0:
+                sql.set_flood(chat.id, 0)
+                message.reply_text("Anti-flood has been disabled.")
+                return "<b>{}:</b>" \
+                       "\n#SETFLOOD" \
+                       "\n<b>• Admin:</b> {}" \
+                       "\nDisabled Anti-flood.".format(html.escape(chat.title), mention_html(user.id, user.first_name))
 
-    try:
-        member = chat.get_member(user_id)
-    except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user")
-            return ""
+            elif amount < 1:
+                message.reply_text("Anti-flood has to be either 0 (disabled) or least 1")
+                return ""
+
+            else:
+                sql.set_flood(chat.id, amount)
+                message.reply_text("Anti-flood has been updated and set to {}".format(amount))
+                return "<b>{}:</b>" \
+                       "\n#SETFLOOD" \
+                       "\n<b>• Admin:</b> {}" \
+                       "\nSet anti-flood to <code>{}</code>.".format(html.escape(chat.title),
+                                                                    mention_html(user.id, user.first_name), amount)
+
         else:
-            raise
-
-    if is_user_admin(chat, user_id, member):
-        message.reply_text("I really wish I could mute admins...")
-        return ""
-
-    if user_id == bot.id:
-        message.reply_text("I'm not gonna MUTE myself, are you crazy?")
-        return ""
-
-    if not reason:
-        message.reply_text("You haven't specified a time to mute this user for!")
-        return ""
-
-    split_reason = reason.split(None, 1)
-
-    time_val = split_reason[0].lower()
-    if len(split_reason) > 1:
-        reason = split_reason[1]
+            message.reply_text("Unrecognised argument - please use a number, 'off', or 'no'.")
     else:
-        reason = ""
-
-    mutetime = extract_time(message, time_val)
-
-    if not mutetime:
-        return ""
-
-    log = "<b>{}:</b>" \
-          "\n#TEMP MUTED" \
-          "\n<b>Admin:</b> {}" \
-          "\n<b>User:</b> {}" \
-          "\n<b>Time:</b> {}".format(html.escape(chat.title), mention_html(user.id, user.first_name),
-                                     mention_html(member.user.id, member.user.first_name), time_val)
-    if reason:
-        log += "\n<b>Reason:</b> {}".format(reason)
-
-    try:
-        if member.can_send_messages is None or member.can_send_messages:
-            bot.restrict_chat_member(chat.id, user_id, until_date=mutetime, can_send_messages=False)
-            message.reply_text("Muted for {}!".format(time_val))
-            return log
-        else:
-            message.reply_text("This user is already muted.")
-
-    except BadRequest as excp:
-        if excp.message == "Reply message not found":
-            # Do not reply
-            message.reply_text("Muted for {}!".format(time_val), quote=False)
-            return log
-        else:
-            LOGGER.warning(update)
-            LOGGER.exception("ERROR muting user %s in chat %s (%s) due to %s", user_id, chat.title, chat.id,
-                             excp.message)
-            message.reply_text("Well damn, I can't mute that user.")
-
+        message.reply_text("Give me an argument! Set a number to enforce against consecutive spams.\n" \
+                           "i.e `/setflood 5`: to control consecutive of messages.", parse_mode=ParseMode.MARKDOWN)
     return ""
 
 
+@run_async
+def flood(bot: Bot, update: Update):
+    chat = update.effective_chat  # type: Optional[Chat]
+    msg = update.effective_message # type: Optional[Message]
+    limit = sql.get_flood_limit(chat.id)
+    if limit == 0:
+        update.effective_message.reply_text("I'm not currently enforcing flood control!")
+    else:
+        soft_flood = sql.get_flood_strength(chat.id)
+        if soft_flood:
+            msg.reply_text("I'm currently kicking users out if they send more than {} " 
+                           "consecutive messages. They will be able to join again!".format(limit, parse_mode=ParseMode.MARKDOWN))
+        else:
+            msg.reply_text("I'm currently banning users if they send more than {} " 
+                           "consecutive messages.".format(limit, parse_mode=ParseMode.MARKDOWN))
+
+@run_async
+@user_admin
+@loggable
+def set_flood_strength(bot: Bot, update: Update, args: List[str]):
+    chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
+    msg = update.effective_message  # type: Optional[Message]
+
+    if args:
+        if args[0].lower() in ("on", "yes"):
+            sql.set_flood_strength(chat.id, False)
+            msg.reply_text("Exceeding consecutive flood limit will result in a ban!")
+            return "<b>{}:</b>\n" \
+                   "<b>• Admin:</b> {}\n" \
+                   "Has enabled strong flood and users will be banned.".format(html.escape(chat.title),
+                                                                            mention_html(user.id, user.first_name))
+
+        elif args[0].lower() in ("off", "no"):
+            sql.set_flood_strength(chat.id, True)
+            msg.reply_text("Exceeding consecutive flood limit will result in a kick, Users will able to join back.")
+            return "<b>{}:</b>\n" \
+                   "<b>• Admin:</b> {}\n" \
+                   "Has disabled strong flood and users will only be kicked.".format(html.escape(chat.title),
+                                                                                  mention_html(user.id,
+                                                                                               user.first_name))
+
+        else:
+            msg.reply_text("I only understand on/yes/no/off!")
+    else:
+        soft_flood = sql.get_flood_strength(chat.id)
+        if soft_flood == True:
+            msg.reply_text("Flood strength is currently set to *kick* users when they exceed the limits. ",
+                           parse_mode=ParseMode.MARKDOWN)
+                 
+        elif soft_flood:
+            msg.reply_text("The default configuration for flood control is currently set as a ban.",
+                           parse_mode=ParseMode.MARKDOWN)
+        
+        elif soft_flood == False:
+            msg.reply_text("Flood strength is currently set to *ban* users when they exceed the limits, "
+                           "user will be banned.",
+                           parse_mode=ParseMode.MARKDOWN)
+    return ""
+
+def __migrate__(old_chat_id, new_chat_id):
+    sql.migrate_chat(old_chat_id, new_chat_id)
+
+
+def __chat_settings__(chat_id, user_id):
+    limit = sql.get_flood_limit(chat_id)
+    soft_flood = sql.get_flood_strength(chat_id)
+    if limit == 0:
+        return "*Not* currently enforcing flood control."
+    else:
+        if soft_flood:
+            return "Anti-flood is set to `{}` messages and *KICK* if exceeded.".format(limit)
+        else:
+            return "Anti-flood is set to `{}` messages and *BAN* if exceeded.".format(limit)
 __help__ = """
+You know how sometimes, people join, send 100 messages, and ruin your chat? With antiflood, that happens no more!
+Antiflood allows you to take action on users that send more than x messages in a row. Exceeding the set flood \
+will result in banning or kicking the user.
+ - /flood: Get the current flood control setting
 *Admin only:*
- - /mute <userhandle>: silences a user. Can also be used as a reply, muting the replied to user.
- - /tmute <userhandle> x(m/h/d): mutes a user for x time. (via handle, or reply). m = minutes, h = hours, d = days.
- - /unmute <userhandle>: unmutes a user. Can also be used as a reply, muting the replied to user.
+ - /setflood <int/'no'/'off'>: enables or disables flood control
+ - /strongflood <on/yes/off/no>: If set to on, exceeding the flood limit will result in a ban. Else, will just kick.
 """
 
-__mod_name__ = "Muting"
+__mod_name__ = "Antiflood"
 
-MUTE_HANDLER = CommandHandler("mute", mute, pass_args=True, filters=Filters.group)
-UNMUTE_HANDLER = CommandHandler("unmute", unmute, pass_args=True, filters=Filters.group)
-TEMPMUTE_HANDLER = CommandHandler(["tmute", "tempmute"], temp_mute, pass_args=True, filters=Filters.group)
+FLOOD_BAN_HANDLER = MessageHandler(Filters.all & ~Filters.status_update & Filters.group, check_flood)
+SET_FLOOD_HANDLER = CommandHandler("setflood", set_flood, pass_args=True, filters=Filters.group)
+FLOOD_HANDLER = CommandHandler("flood", flood, filters=Filters.group)
+FLOOD_STRENGTH_HANDLER = CommandHandler("strongflood", set_flood_strength, pass_args=True, filters=Filters.group)
 
-dispatcher.add_handler(MUTE_HANDLER)
-dispatcher.add_handler(UNMUTE_HANDLER)
-dispatcher.add_handler(TEMPMUTE_HANDLER)
+dispatcher.add_handler(FLOOD_BAN_HANDLER, FLOOD_GROUP)
+dispatcher.add_handler(SET_FLOOD_HANDLER)
+dispatcher.add_handler(FLOOD_HANDLER)
+dispatcher.add_handler(FLOOD_STRENGTH_HANDLER)
