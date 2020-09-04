@@ -1,210 +1,74 @@
-import html
-
-from typing import Optional, List
-
-from telegram import Bot, Chat, Update, ParseMode
-from telegram.error import BadRequest
-from telegram.ext import CommandHandler, run_async
-from telegram.utils.helpers import mention_html
-
-from alluka import dispatcher, LOGGER
-from alluka.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_admin, can_restrict,
-                                                     connection_status)
-from alluka.modules.helper_funcs.extraction import extract_user, extract_user_and_text
-from alluka.modules.helper_funcs.string_handling import extract_time
-from alluka.modules.log_channel import loggable
+from alluka.events import register
+from alluka.modules.helper_funcs.telethon.chat_status import user_is_admin, can_delete_messages
 
 
-def check_user(user_id: int, bot: Bot, chat: Chat) -> Optional[str]:
-    if not user_id:
-        reply = "You don't seem to be referring to a user."
-        return reply
 
-    try:
-        member = chat.get_member(user_id)
-    except BadRequest as excp:
-        if excp.message == "User not found":
-            reply = "I can't seem to find this user"
-            return reply
-        else:
-            raise
+@register(pattern="^/purge")
+async def purge(event):
+    if event.from_id == None:
+        return
 
-    if user_id == bot.id:
-        reply = "I'm not gonna MUTE myself, How high are you?"
-        return reply
+    chat = event.chat_id
 
-    if is_user_admin(chat, user_id, member):
-        reply = "I really wish I could mute admins."
-        return reply
+    if not await user_is_admin(user_id=event.from_id, message=event):
+        await event.reply(chat, "Who dis non-admin telling me what to do?")
+        return
 
-    return None
+    if not await can_delete_messages(message=event):
+        await event.reply(chat, "I can't delete messages here! Make sure I'm admin and can delete other user's messages.")
+        return
 
+    msg = await event.get_reply_message()
+    if not msg:
+        await event.reply(chat, "Reply to a message to select where to start purging from.")
+        return
+    msgs = []
+    msg_id = msg.id
+    delete_to = event.message.id - 1
+    await event.client.delete_messages(chat, event.message.id)
 
-@run_async
-@connection_status
-@bot_admin
-@user_admin
-@loggable
-def mute(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat
-    chat_name = chat.title or chat.first or chat.username
-    user = update.effective_user
-    message = update.effective_message
+    msgs.append(event.reply_to_msg_id)
+    for m_id in range(delete_to, msg_id - 1, -1):
+        msgs.append(m_id)
+        if len(msgs) == 100:
+            await event.client.delete_messages(chat, msgs)
+            msgs = []
 
-    user_id, reason = extract_user_and_text(message, args)
-    reply = check_user(user_id, bot, chat)
-
-    if reply:
-        message.reply_text(reply)
-        return ""
-
-    member = chat.get_member(user_id)
-
-    log = (f"<b>{html.escape(chat.title)}:</b>\n"
-           f"#MUTE\n"
-           f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-           f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}")
-
-    if reason:
-        log += f"\n<b>Reason:</b> {reason}"
-
-    if member.can_send_messages is None or member.can_send_messages:
-        bot.restrict_chat_member(chat.id, user_id, can_send_messages=False)
-        bot.sendMessage(chat.id, f"<b>{html.escape(member.user.first_name)}</b> is muted in " + f"{chat_name}",
-                        parse_mode=ParseMode.HTML)
-        return log
-
-    else:
-        message.reply_text("This user is already muted!")
-
-    return ""
+    await event.client.delete_messages(chat, msgs)
+    text = (chat, "Purge completed.")
+    await event.respond(text, parse_mode='md')
 
 
-@run_async
-@connection_status
-@bot_admin
-@user_admin
-@loggable
-def unmute(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat
-    chat_name = chat.title or chat.first or chat.username
-    user = update.effective_user
-    message = update.effective_message
+@register(pattern="^/del$")
+async def delet(event):
+    if event.from_id == None:
+        return
 
-    user_id = extract_user(message, args)
-    if not user_id:
-        message.reply_text("You'll need to either give me a username to unmute, or reply to someone to be unmuted.")
-        return ""
+    chat = event.chat_id
 
-    member = chat.get_member(int(user_id))
+    if not await user_is_admin(user_id=event.from_id, message=event):
+        await event.reply(chat, "Who dis non-admin telling me what to do?")
+        return
 
-    if member.status != 'kicked' and member.status != 'left':
-        if (member.can_send_messages
-                and member.can_send_media_messages
-                and member.can_send_other_messages
-                and member.can_add_web_page_previews):
-            message.reply_text("This user already has the right to speak.")
-        else:
-            bot.restrict_chat_member(chat.id, int(user_id),
-                                     can_send_messages=True,
-                                     can_send_media_messages=True,
-                                     can_send_other_messages=True,
-                                     can_add_web_page_previews=True)
-            bot.sendMessage(chat.id, f"Yep, <b>{html.escape(member.user.first_name)}</b> can start talking again in " + f"{chat_name}",
-                            parse_mode=ParseMode.HTML)
-            return (f"<b>{html.escape(chat.title)}:</b>\n"
-                    f"#UNMUTE\n"
-                    f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}")
-    else:
-        message.reply_text("This user isn't even in the chat, unmuting them won't make them talk more than they "
-                           "already do!")
+    if not await can_delete_messages(message=event):
+        await event.reply(chat, "I can't delete messages here! Make sure I'm admin and can delete other user's messages.")
+        return
 
-    return ""
+    msg = await event.get_reply_message()
+    if not msg:
+        await event.reply(chat, "Reply to a message to select where to start purging from.")
+        return
+    currentmsg = event.message
+    chat = await event.get_input_chat()
+    delall = [msg, currentmsg]
+    await event.client.delete_messages(chat, delall)
 
-
-@run_async
-@connection_status
-@bot_admin
-@can_restrict
-@user_admin
-@loggable
-def temp_mute(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat
-    user = update.effective_user
-    message = update.effective_message
-
-    user_id, reason = extract_user_and_text(message, args)
-    reply = check_user(user_id, bot, chat)
-
-    if reply:
-        message.reply_text(reply)
-        return ""
-
-    member = chat.get_member(user_id)
-
-    if not reason:
-        message.reply_text("You haven't specified a time to mute this user for!")
-        return ""
-
-    split_reason = reason.split(None, 1)
-
-    time_val = split_reason[0].lower()
-    if len(split_reason) > 1:
-        reason = split_reason[1]
-    else:
-        reason = ""
-
-    mutetime = extract_time(message, time_val)
-
-    if not mutetime:
-        return ""
-
-    log = (f"<b>{html.escape(chat.title)}:</b>\n"
-           f"#TEMP MUTED\n"
-           f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-           f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}\n"
-           f"<b>Time:</b> {time_val}")
-    if reason:
-        log += f"\n<b>Reason:</b> {reason}"
-
-    try:
-        if member.can_send_messages is None or member.can_send_messages:
-            bot.restrict_chat_member(chat.id, user_id, until_date=mutetime, can_send_messages=False)
-            bot.sendMessage(chat.id, f"Muted <b>{html.escape(member.user.first_name)}</b> for {time_val}!",
-                            parse_mode=ParseMode.HTML)
-            return log
-        else:
-            message.reply_text("This user is already muted.")
-
-    except BadRequest as excp:
-        if excp.message == "Reply message not found":
-            # Do not reply
-            message.reply_text(f"Muted for {time_val}!", quote=False)
-            return log
-        else:
-            LOGGER.warning(update)
-            LOGGER.exception("ERROR muting user %s in chat %s (%s) due to %s", user_id, chat.title, chat.id,
-                             excp.message)
-            message.reply_text("Well damn, I can't mute that user.")
-
-    return ""
 
 
 __help__ = """
 *Admin only:*
- - /mute <userhandle>: silences a user. Can also be used as a reply, muting the replied to user.
- - /tmute <userhandle> x(m/h/d): mutes a user for x time. (via handle, or reply). m = minutes, h = hours, d = days.
- - /unmute <userhandle>: unmutes a user. Can also be used as a reply, muting the replied to user.
+ - /del: deletes the message you replied to
+ - /purge: deletes all messages between this and the replied to message.
 """
 
-MUTE_HANDLER = CommandHandler("mute", mute, pass_args=True)
-UNMUTE_HANDLER = CommandHandler("unmute", unmute, pass_args=True)
-TEMPMUTE_HANDLER = CommandHandler(["tmute", "tempmute"], temp_mute, pass_args=True)
-
-dispatcher.add_handler(MUTE_HANDLER)
-dispatcher.add_handler(UNMUTE_HANDLER)
-dispatcher.add_handler(TEMPMUTE_HANDLER)
-
-__mod_name__ = "Muting"
-__handlers__ = [MUTE_HANDLER, UNMUTE_HANDLER, TEMPMUTE_HANDLER]
+__mod_name__ = "Purges"
