@@ -26,7 +26,7 @@ GBAN_ERRORS = {
     "Peer_id_invalid",
     "Group chat was deactivated",
     "Need to be inviter of a user to kick it from a basic group",
-    "U need to be an admin to use this",
+    "Chat_admin_required",
     "Only the creator of a basic group can kick group administrators",
     "Channel_private",
     "Thats Not in the chat"
@@ -40,7 +40,7 @@ UNGBAN_ERRORS = {
     "Method is available for supergroup and channel chats only",
     "Not in the chat",
     "Channel_private",
-    "U need to be an admin to use this",
+    "Chat_admin_required",
     "Peer_id_invalid",
 }
 
